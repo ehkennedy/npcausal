@@ -30,7 +30,7 @@
 #' @references (Also see references for function \code{ate})
 #' @references Kennedy EH, Sjolander A, Small DS (2015). Semiparametric causal inference in matched cohort studies. \emph{Biometrika}.
 #'
-att <- function(x, a, y, nsplits=2,
+att <- function(y,a,x, nsplits=2,
   sl.lib=c("SL.earth","SL.gam","SL.glm","SL.glm.interaction","SL.mean",
   "SL.ranger")){
 
