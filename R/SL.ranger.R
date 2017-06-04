@@ -15,7 +15,7 @@
 #'
 SL.ranger <- function (Y, X, newX, family, ...) {
   require("ranger")
-  fit.rf <- ranger::ranger(Y ~ ., data=X)
+  fit.rf <- ranger::ranger(Y ~ ., data=cbind(X,Y))
   pred <- predict(fit.rf,data=newX)$predictions
   fit <- list(object = fit.rf)
   out <- list(pred = pred, fit = fit)
