@@ -16,15 +16,15 @@
 #' process conditions). Otherwise must have nsplits>1.
 #' @param sl.lib algorithm library for SuperLearner.
 #' Default library includes "earth", "gam", "glm", "glmnet", "glm.interaction",
-#' "mean", "ranger", "rpart.
+#' "mean", "ranger", "rpart".
 #'
 #' @return A list containing the following components:
-#' \item{res}{ estimates/SEs/CIs/p-values for local average treatment effect E(Y(a=1)-Y(a=0)|A(z=1)>A(z=0)).}
+#' \item{res}{ estimates/SEs/CIs/p-values for local average treatment effect E(Y(a=1)-Y(a=0)|A(z=1)>A(z=0)), as well as IV strength and sharpness.}
 #' \item{nuis}{ subject-specific estimates of nuisance functions (i.e., IV propensity score and treatment/outcome regressions) }
 #' \item{ifvals}{ matrix of estimated influence function values.}
 #'
 #' @examples
-#' n <- 1000; x <- matrix(rnorm(n*5),nrow=n)
+#' n <- 100; x <- matrix(rnorm(n*5),nrow=n)
 #' z <- rbinom(n,1,0.5); a <- rbinom(n,1,0.6*z+0.2)
 #' y <- rnorm(n)
 #'
@@ -33,6 +33,7 @@
 #' @references (Also see references for function \code{ate})
 #' @references Angrist JD, Imbens GW, Rubin DB (1996). Identification of causal effects using instrumental variables. \emph{Journal of the American Statistical Association}.
 #' @references Abadie A (2003). Semiparametric instrumental variable estimation of treatment response models. \emph{Journal of Econometrics}.
+#' @references Kennedy EH, Balakrishnan S, G'Sell M (2017). Complier classification with sharp instrumental variables. \emph{Working Paper}.
 #'
 ivlate <- function(y,a,z,x, nsplits=2,
   sl.lib=c("SL.earth","SL.gam","SL.glm","SL.glm.interaction","SL.mean","SL.ranger","SL.rpart")){
@@ -49,6 +50,7 @@ pb <- txtProgressBar(min=0, max=4*nsplits, style=3)
 s <- sample(rep(1:nsplits,ceiling(n/nsplits))[1:n])
 pihat <- rep(NA,n); la1hat <- rep(NA,n); la0hat <- rep(NA,n)
 mu1hat <- rep(NA,n); mu0hat <- rep(NA,n)
+onesided <- sum(a[z==0])==0
 
 pbcount <- 0
 Sys.sleep(0.1); setTxtProgressBar(pb,pbcount); pbcount <- pbcount+1
@@ -74,10 +76,12 @@ la1hat[test] <- la1fit$SL.predict
 Sys.sleep(0.1)
 setTxtProgressBar(pb,pbcount); pbcount <- pbcount+1
 
+if (!onesided){
 la0fit <- SuperLearner(a[z==0 & train],
   as.data.frame(x[z==0 & train,]),
   newX=as.data.frame(x[test,]), SL.library=sl.lib)
-la0hat[test] <- la0fit$SL.predict
+la0hat[test] <- la0fit$SL.predict }
+if (onesided){ la0hat[test] <- 0 }
 
 Sys.sleep(0.1)
 setTxtProgressBar(pb,pbcount); pbcount <- pbcount+1
@@ -102,15 +106,18 @@ setTxtProgressBar(pb,pbcount); pbcount <- pbcount+1
 
 ifvals.out <- z*(y-mu1hat)/pihat - (1-z)*(y-mu0hat)/(1-pihat) + mu1hat-mu0hat
 ifvals.trt <- z*(a-la1hat)/pihat - (1-z)*(a-la0hat)/(1-pihat) + la1hat-la0hat
+ifvals.gam2 <- 2*(la1hat-la0hat)*(z*(a-la1hat)/pihat - (1-z)*(a-la0hat)/(1-pihat)) + (la1hat-la0hat)^2
 
 psihat <- mean(ifvals.out)/mean(ifvals.trt)
 ifvals <- (ifvals.out - psihat*ifvals.trt)/mean(ifvals.trt)
+muhat <- mean(ifvals.trt); xihat <- mean(ifvals.gam2)
+ifvals.shrp <- (ifvals.gam2 - xihat)/(muhat-muhat^2) + (2*muhat*xihat - xihat - muhat^2)*(ifvals.trt - muhat)/((muhat-muhat^2)^2)
 
-est <- psihat
-se <- sd(ifvals)/sqrt(n)
+est <- c(psihat, muhat, (xihat - muhat^2)/(muhat-muhat^2) )
+se <- c(sd(ifvals), sd(ifvals.trt), sd(ifvals.shrp))/sqrt(n)
 ci.ll <- est-1.96*se; ci.ul <- est+1.96*se
 pval <- round(2*(1-pnorm(abs(est/se))),3)
-param <- c("E{Y(a=1)-Y(a=0)|A(z=1)>A(z=0)}")
+param <- c("LATE","Strength", "Sharpness")
 res <- data.frame(parameter=param, est,se,ci.ll,ci.ul,pval)
 rownames(res) <- NULL
 
