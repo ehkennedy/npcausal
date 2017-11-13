@@ -23,11 +23,11 @@ process conditions). Otherwise must have nsplits>1.}
 
 \item{sl.lib}{algorithm library for SuperLearner.
 Default library includes "earth", "gam", "glm", "glmnet", "glm.interaction",
-"mean", "ranger", "rpart.}
+"mean", "ranger", "rpart".}
 }
 \value{
 A list containing the following components:
-\item{res}{ estimates/SEs/CIs/p-values for local average treatment effect E(Y(a=1)-Y(a=0)|A(z=1)>A(z=0)).}
+\item{res}{ estimates/SEs/CIs/p-values for local average treatment effect E(Y(a=1)-Y(a=0)|A(z=1)>A(z=0)), as well as IV strength and sharpness.}
 \item{nuis}{ subject-specific estimates of nuisance functions (i.e., IV propensity score and treatment/outcome regressions) }
 \item{ifvals}{ matrix of estimated influence function values.}
 }
@@ -35,7 +35,7 @@ A list containing the following components:
 \code{ivlate} is used to estimate the mean outcome among compliers (i.e., those encouraged by the instrument) had all subjects received treatment versus control.
 }
 \examples{
-n <- 1000; x <- matrix(rnorm(n*5),nrow=n)
+n <- 100; x <- matrix(rnorm(n*5),nrow=n)
 z <- rbinom(n,1,0.5); a <- rbinom(n,1,0.6*z+0.2)
 y <- rnorm(n)
 
@@ -48,4 +48,6 @@ ivlate.res <- ivlate(y,a,z,x)
 Angrist JD, Imbens GW, Rubin DB (1996). Identification of causal effects using instrumental variables. \emph{Journal of the American Statistical Association}.
 
 Abadie A (2003). Semiparametric instrumental variable estimation of treatment response models. \emph{Journal of Econometrics}.
+
+Kennedy EH, Balakrishnan S, G'Sell M (2017). Complier classification with sharp instrumental variables. \emph{Working Paper}.
 }
