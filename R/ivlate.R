@@ -111,10 +111,15 @@ ifvals.gam2 <- 2*(la1hat-la0hat)*(z*(a-la1hat)/pihat - (1-z)*(a-la0hat)/(1-pihat
 psihat <- mean(ifvals.out)/mean(ifvals.trt)
 ifvals <- (ifvals.out - psihat*ifvals.trt)/mean(ifvals.trt)
 muhat <- mean(ifvals.trt); xihat <- mean(ifvals.gam2)
-ifvals.shrp <- (ifvals.gam2 - xihat)/(muhat-muhat^2) + (2*muhat*xihat - xihat - muhat^2)*(ifvals.trt - muhat)/((muhat-muhat^2)^2)
+ifvals.sharp <- (ifvals.gam2 - xihat)/(muhat-muhat^2) + (2*muhat*xihat - xihat - muhat^2)*(ifvals.trt - muhat)/((muhat-muhat^2)^2)
 
-est <- c(psihat, muhat, (xihat - muhat^2)/(muhat-muhat^2) )
-se <- c(sd(ifvals), sd(ifvals.trt), sd(ifvals.shrp))/sqrt(n)
+expit <- function(x){ exp(x)/(1+exp(x)) }
+logx <- function(x){ 2*((x-1)/(x+1) + ((x-1)/(x+1))^3/3 + ((x-1)/(x+1))^5/5
+          + ((x-1)/(x+1))^7/7 + ((x-1)/(x+1))^9/9 + ((x-1)/(x+1))^11/11)  }
+sharp <- expit(logx(xihat-muhat^2) - logx(muhat-xihat))
+
+est <- c(psihat, muhat, sharp )
+se <- c(sd(ifvals), sd(ifvals.trt), sd(ifvals.sharp))/sqrt(n)
 ci.ll <- est-1.96*se; ci.ul <- est+1.96*se
 pval <- round(2*(1-pnorm(abs(est/se))),3)
 param <- c("LATE","Strength", "Sharpness")
