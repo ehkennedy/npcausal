@@ -44,6 +44,21 @@ require("gam")
 require("ranger")
 require("rpart")
 
+expit <- function(x){ exp(x)/(1+exp(x)) }
+logx <- function(x){ 2*((x-1)/(x+1) + ((x-1)/(x+1))^3/3 + ((x-1)/(x+1))^5/5
+          + ((x-1)/(x+1))^7/7 + ((x-1)/(x+1))^9/9 + ((x-1)/(x+1))^11/11)  }
+project.01 <- function(x1,y1){
+  x2 <- x1; y2 <- y1
+  y2[y1>1 & 0<x1 & x1<1] <- 1
+  x2[x1<0 & y1>1] <- 0; y2[x1<0 & y1>1] <- 1
+  x2[x1<0 & 0<y1 & 11] <- 0
+  x2[-x1>y1 & 10] <- 0; y2[-x1>y1 & y1<0] <- 0
+  x2[x1>y1 & y1>-x1 & y1<2-x1] <- (x1+y1)[x1>y1 & y1>-x1 & y1<2-x1]/2
+  y2[x1>y1 & y1>-x1 & y1<2-x1] <- (x1+y1)[x1>y1 & y1>-x1 & y1<2-x1]/2
+  x2[y1>2-x1 & x1>1] <- 1; y2[y1>2-x1 & x1>1] <- 1
+  return(cbind(x2,y2))
+}
+
 n <- dim(x)[1]
 pb <- txtProgressBar(min=0, max=4*nsplits, style=3)
 
@@ -104,6 +119,10 @@ Sys.sleep(0.1)
 setTxtProgressBar(pb,pbcount); pbcount <- pbcount+1
 }
 
+# project onto 0-1 and la1hat>la0hat space
+newla <- project.01(la0hat,la1hat)
+la0hat <- newla[,1]; la1hat <- newla[,2]
+
 ifvals.out <- z*(y-mu1hat)/pihat - (1-z)*(y-mu0hat)/(1-pihat) + mu1hat-mu0hat
 ifvals.trt <- z*(a-la1hat)/pihat - (1-z)*(a-la0hat)/(1-pihat) + la1hat-la0hat
 ifvals.gam2 <- 2*(la1hat-la0hat)*(z*(a-la1hat)/pihat - (1-z)*(a-la0hat)/(1-pihat)) + (la1hat-la0hat)^2
@@ -113,9 +132,6 @@ ifvals <- (ifvals.out - psihat*ifvals.trt)/mean(ifvals.trt)
 muhat <- mean(ifvals.trt); xihat <- mean(ifvals.gam2)
 ifvals.sharp <- (ifvals.gam2 - xihat)/(muhat-muhat^2) + (2*muhat*xihat - xihat - muhat^2)*(ifvals.trt - muhat)/((muhat-muhat^2)^2)
 
-expit <- function(x){ exp(x)/(1+exp(x)) }
-logx <- function(x){ 2*((x-1)/(x+1) + ((x-1)/(x+1))^3/3 + ((x-1)/(x+1))^5/5
-          + ((x-1)/(x+1))^7/7 + ((x-1)/(x+1))^9/9 + ((x-1)/(x+1))^11/11)  }
 sharp <- expit(logx(xihat-muhat^2) - logx(muhat-xihat))
 
 est <- c(psihat, muhat, sharp )
