@@ -140,8 +140,8 @@ sharp <- expit(logx(xihat-muhat^2) - logx(muhat-xihat))
 est <- c(psihat, muhat, sharp )
 se <- c(sd(ifvals), sd(ifvals.trt), sd(ifvals.sharp))/sqrt(n)
 ci.ll <- est-1.96*se; ci.ul <- est+1.96*se
-ci.ll[3] <- expit(logit(psihat) - 1.96*sd(ifvals.sharp/(psihat-psihat^2))/sqrt(n))
-ci.ul[3] <- expit(logit(psihat) + 1.96*sd(ifvals.sharp/(psihat-psihat^2))/sqrt(n))
+ci.ll[3] <- expit(logit(sharp) - 1.96*sd(ifvals.sharp/(sharp-sharp^2))/sqrt(n))
+ci.ul[3] <- expit(logit(sharp) + 1.96*sd(ifvals.sharp/(sharp-sharp^2))/sqrt(n))
 pval <- round(2*(1-pnorm(abs(est/se))),3); pval[2:3] <- NA
 param <- c("LATE","Strength", "Sharpness")
 res <- data.frame(parameter=param, est,se,ci.ll,ci.ul,pval)
