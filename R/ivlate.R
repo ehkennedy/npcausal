@@ -87,7 +87,7 @@ setTxtProgressBar(pb,pbcount); pbcount <- pbcount+1
 # estimate treatment regression
 la1fit <- SuperLearner(a[z==1 & train],
   as.data.frame(x[z==1 & train,]),
-  newX=as.data.frame(x[test,]), SL.library=sl.lib)
+  newX=as.data.frame(x[test,]), SL.library=sl.lib)#,family=binomial)
 la1hat[test] <- la1fit$SL.predict
 
 Sys.sleep(0.1)
@@ -96,7 +96,7 @@ setTxtProgressBar(pb,pbcount); pbcount <- pbcount+1
 if (!onesided){
 la0fit <- SuperLearner(a[z==0 & train],
   as.data.frame(x[z==0 & train,]),
-  newX=as.data.frame(x[test,]), SL.library=sl.lib)
+  newX=as.data.frame(x[test,]), SL.library=sl.lib)#,family=binomial)
 la0hat[test] <- la0fit$SL.predict }
 if (onesided){ la0hat[test] <- 0 }
 
@@ -104,9 +104,10 @@ Sys.sleep(0.1)
 setTxtProgressBar(pb,pbcount); pbcount <- pbcount+1
 
 # estimate outcome regression
+yfam <- "gaussian"; if (length(unique(y))==2){ yfam <- "binomial" }
 mu1fit <- SuperLearner(y[z==1 & train],
   as.data.frame(x[z==1 & train,]),
-  newX=as.data.frame(x[test,]), SL.library=sl.lib)
+  newX=as.data.frame(x[test,]), SL.library=sl.lib)#, family=yfam)
 mu1hat[test] <- mu1fit$SL.predict
 
 Sys.sleep(0.1)
@@ -114,7 +115,7 @@ setTxtProgressBar(pb,pbcount); pbcount <- pbcount+1
 
 mu0fit <- SuperLearner(y[z==0 & train],
   as.data.frame(x[z==0 & train,]),
-  newX=as.data.frame(x[test,]), SL.library=sl.lib)
+  newX=as.data.frame(x[test,]), SL.library=sl.lib)#, family=yfam)
 mu0hat[test] <- mu0fit$SL.predict
 
 Sys.sleep(0.1)
@@ -133,15 +134,19 @@ ifvals.gam2 <- 2*(la1hat-la0hat)*(z*(a-la1hat)/pihat - (1-z)*(a-la0hat)/(1-pihat
 psihat <- mean(ifvals.out)/mean(ifvals.trt)
 ifvals <- (ifvals.out - psihat*ifvals.trt)/mean(ifvals.trt)
 muhat <- mean(ifvals.trt); xihat <- mean(ifvals.gam2)
-ifvals.sharp <- (ifvals.gam2 - xihat)/(muhat-muhat^2) + (2*muhat*xihat - xihat - muhat^2)*(ifvals.trt - muhat)/((muhat-muhat^2)^2)
 
-sharp <- expit(logx(xihat-muhat^2) - logx(muhat-xihat))
+muhat2 <- muhat*(muhat>0.01 & muhat<0.99) + 0.01*(muhat<0.01) + 0.99*(muhat>0.99)
+q <- quantile(la1hat-la0hat,probs=1-muhat2)
+xihat2 <- mean(ifvals.trt*(la1hat-la0hat>q))
+sharp2 <- (xihat2-muhat^2)/(muhat-muhat^2)
+ifvals.sharp2 <- (ifvals.trt*((la1hat-la0hat>q)+q)-xihat2 - q*((la1hat-la0hat>q)-muhat2) )/(muhat-muhat^2) + (2*muhat*xihat2 - xihat2 - muhat^2)*(ifvals.trt - muhat)/((muhat-muhat^2)^2)
+if (sharp2<0.001){ sharp2 <- 0.001 }; if (sharp2>0.999){ sharp2 <- 0.999 }
 
-est <- c(psihat, muhat, sharp )
-se <- c(sd(ifvals), sd(ifvals.trt), sd(ifvals.sharp))/sqrt(n)
+est <- c(psihat, muhat, sharp2 )
+se <- c(sd(ifvals), sd(ifvals.trt), sd(ifvals.sharp2))/sqrt(n)
 ci.ll <- est-1.96*se; ci.ul <- est+1.96*se
-ci.ll[3] <- expit(logit(sharp) - 1.96*sd(ifvals.sharp/(sharp-sharp^2))/sqrt(n))
-ci.ul[3] <- expit(logit(sharp) + 1.96*sd(ifvals.sharp/(sharp-sharp^2))/sqrt(n))
+ci.ll[3] <- expit(logit(sharp2) - 1.96*sd(ifvals.sharp2/(sharp2-sharp2^2))/sqrt(n))
+ci.ul[3] <- expit(logit(sharp2) + 1.96*sd(ifvals.sharp2/(sharp2-sharp2^2))/sqrt(n))
 pval <- round(2*(1-pnorm(abs(est/se))),3); pval[2:3] <- NA
 param <- c("LATE","Strength", "Sharpness")
 res <- data.frame(parameter=param, est,se,ci.ll,ci.ul,pval)
