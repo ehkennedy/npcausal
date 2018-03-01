@@ -23,7 +23,7 @@
 #' \item{ifvals}{ matrix of estimated influence function values.}
 #'
 #' @examples
-#' n <- 1000; x <- matrix(rnorm(n*5),nrow=n)
+#' n <- 100; x <- matrix(rnorm(n*5),nrow=n)
 #' a <- sample(3,n,replace=TRUE); y <- rnorm(n)
 #'
 #' ate.res <- ate(y,a,x)
@@ -86,7 +86,7 @@ if (i == n.avals){ pihat[,i] <- 1 - apply(pihat,1,sum, na.rm=T) }
 }
 
 amat <- matrix(rep(a,n.avals),nrow=n,byrow=F)
-alevel <- matrix(rep(1:n.avals, rep(n,n.avals)),nrow=n,byrow=F)
+alevel <- matrix(rep(as.numeric(avals), rep(n,n.avals)),nrow=n,byrow=F)
 ymat <- matrix(rep(y,n.avals),nrow=n,byrow=F)
 
 ifvals <- as.matrix( (amat==alevel)*(ymat-muhat)/pihat + muhat )
