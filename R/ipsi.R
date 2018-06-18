@@ -69,7 +69,7 @@ require(ranger)
       # compute weights
       wt[,j] <- (delta*dat$a + 1-dat$a)/(delta*dat$ps + 1-dat$ps)
       cumwt[,j] <- as.numeric(t(aggregate(wt[,j],by=list(dat$id),cumprod)[,-1]))
-      vt[,j] <- (delta-1)*(dat$a*(1-dat$ps) - (1-dat$a)*delta*dat$ps)/delta
+      vt[,j] <- (1-delta)*(dat$a*(1-dat$ps) - (1-dat$a)*delta*dat$ps)/delta
 
       # fit outcome models
       outmod <- vector("list",ntimes); rtp1 <- dat$y[dat$time==end]
