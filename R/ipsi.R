@@ -48,18 +48,22 @@
 #' @importFrom stats qnorm as.formula
 #' @importFrom ranger ranger
 #'
+#' @export
+#'
 #' @examples
-#' n <- 500; T <- 4
-#'
-#' time <- rep(1:T,n); id <- rep(1:n,rep(T,n))
-#' x.trt <- matrix(rnorm(n*T*5),nrow=n*T)
-#' x.out <- matrix(rnorm(n*T*5),nrow=n*T)
-#' a <- rbinom(n*T,1,.5); y <- rnorm(n)
-#'
-#' d.seq <- seq(0.1,5,length.out=10)
-#'
-#' ipsi.res <- ipsi(y,a, x.trt,x.out, time,id, d.seq)
-#'
+#' n <- 500
+#' T <- 4
+#' 
+#' time <- rep(1:T, n)
+#' id <- rep(1:n, rep(T, n))
+#' x.trt <- matrix(rnorm(n * T * 5), nrow = n * T)
+#' x.out <- matrix(rnorm(n * T * 5), nrow = n * T)
+#' a <- rbinom(n * T, 1, .5)
+#' y <- rnorm(n)
+#' 
+#' d.seq <- seq(0.1, 5, length.out = 10)
+#' 
+#' ipsi.res <- ipsi(y, a, x.trt, x.out, time, id, d.seq)
 #' @references Kennedy EH. Nonparametric causal effects based on incremental
 #' propensity score interventions.
 #' \href{https://arxiv.org/abs/1704.00211}{arxiv:1704.00211}
@@ -78,15 +82,17 @@ ipsi <- function(y, a, x.trt, x.out, time, id, delta.seq,
   ifvals <- matrix(nrow = n, ncol = k)
   est.eff <- rep(NA, k)
   wt <- matrix(nrow = n * ntimes, ncol = k)
-  cumwt <- matrix(nrow = n*ntimes, ncol = k)
+  cumwt <- matrix(nrow = n * ntimes, ncol = k)
   rt <- matrix(nrow = n * ntimes, ncol = k)
   vt <- matrix(nrow = n * ntimes, ncol = k)
   x.trt <- data.frame(x.trt)
   x.out <- data.frame(x.out)
 
   if (progress_bar) {
-    pb <- txtProgressBar(min = 0, max = 2 * nsplits * length(delta.seq) + 3,
-                         style = 3)
+    pb <- txtProgressBar(
+      min = 0, max = 2 * nsplits * length(delta.seq) + 3,
+      style = 3
+    )
   }
 
   s <- sample(rep(seq_len(nsplits), ceiling(n / nsplits))[seq_len(n)])
@@ -98,14 +104,15 @@ ipsi <- function(y, a, x.trt, x.out, time, id, delta.seq,
 
   for (split in seq_len(nsplits)) {
     if (progress_bar) {
-      Sys.sleep(0.1);
-      setTxtProgressBar(pb, pbcount);
+      Sys.sleep(0.1)
+      setTxtProgressBar(pb, pbcount)
       pbcount <- pbcount + 1
     }
 
     # fit treatment model
     trtmod <- ranger::ranger(stats::as.formula("a ~ ."),
-                             dat = cbind(x.trt, a = dat$a)[slong != split, ])
+      dat = cbind(x.trt, a = dat$a)[slong != split, ]
+    )
     dat$ps <- predict(trtmod, data = x.trt)$predictions
 
     for (j in seq_len(k)) {
@@ -118,10 +125,12 @@ ipsi <- function(y, a, x.trt, x.out, time, id, delta.seq,
 
       # compute weights
       wt[, j] <- (delta * dat$a + 1 - dat$a) / (delta * dat$ps + 1 - dat$ps)
-      cumwt[, j] <- as.numeric(t(aggregate(wt[, j], by = list(dat$id),
-                                           cumprod)[, -1]))
+      cumwt[, j] <- as.numeric(t(aggregate(wt[, j],
+        by = list(dat$id),
+        cumprod
+      )[, -1]))
       vt[, j] <- (1 - delta) * (dat$a * (1 - dat$ps) -
-                                (1 - dat$a) * delta * dat$ps) / delta
+        (1 - dat$a) * delta * dat$ps) / delta
 
       # fit outcome models
       outmod <- vector("list", ntimes)
@@ -135,8 +144,11 @@ ipsi <- function(y, a, x.trt, x.out, time, id, delta.seq,
         t <- rev(unique(dat$time))[i]
         outmod[[i]] <-
           ranger::ranger(stats::as.formula("rtp1 ~ ."),
-                         dat = cbind(x.out,
-                                     rtp1)[dat$time == t & slong != split, ])
+            dat = cbind(
+              x.out,
+              rtp1
+            )[dat$time == t & slong != split, ]
+          )
 
         # counterfactual case for treatment: A = 1
         newx1 <- x.out[dat$time == t, ]
@@ -156,7 +168,8 @@ ipsi <- function(y, a, x.trt, x.out, time, id, delta.seq,
       # compute influence function values
       ifvals[s == split, j] <- ((cumwt[, j] * dat$y)[dat$time == end] +
         aggregate(cumwt[, j] * vt[, j] * rt[, j],
-                  by = list(dat$id), sum)[, -1])[s == split]
+          by = list(dat$id), sum
+        )[, -1])[s == split]
     }
   }
 
@@ -184,8 +197,8 @@ ipsi <- function(y, a, x.trt, x.out, time, id, delta.seq,
   nbs <- 10000
   mult <- matrix(2 * rbinom(n * nbs, 1, 0.5) - 1, nrow = n, ncol = nbs)
   maxvals <- sapply(seq_len(nbs), function(col) {
-                      max(abs(apply(mult[, col] * ifvals2, 2, sum) / sqrt(n)))
-                   })
+    max(abs(apply(mult[, col] * ifvals2, 2, sum) / sqrt(n)))
+  })
   calpha <- quantile(maxvals, ci_level)
   eff.ll2 <- est.eff - calpha * sigma / sqrt(n)
   eff.ul2 <- est.eff + calpha * sigma / sqrt(n)
@@ -198,15 +211,23 @@ ipsi <- function(y, a, x.trt, x.out, time, id, delta.seq,
 
   # conditionally return influence function values
   if (return_ifvals) {
-    res <- data.frame(increment = delta.seq, est = est.eff, se = sigma,
-                      ci.ll = eff.ll2, ci.ul = eff.ul2, ifvals = ifvals2)
-    res2 <- data.frame(increment = delta.seq, est = est.eff, se = sigma,
-                       ci.ll = eff.ll, ci.ul = eff.ul, ifvals = ifvals)
+    res <- data.frame(
+      increment = delta.seq, est = est.eff, se = sigma,
+      ci.ll = eff.ll2, ci.ul = eff.ul2, ifvals = ifvals2
+    )
+    res2 <- data.frame(
+      increment = delta.seq, est = est.eff, se = sigma,
+      ci.ll = eff.ll, ci.ul = eff.ul, ifvals = ifvals
+    )
   } else {
-    res <- data.frame(increment = delta.seq, est = est.eff, se = sigma,
-                      ci.ll = eff.ll2, ci.ul = eff.ul2)
-    res2 <- data.frame(increment = delta.seq, est = est.eff, se = sigma,
-                       ci.ll = eff.ll, ci.ul = eff.ul)
+    res <- data.frame(
+      increment = delta.seq, est = est.eff, se = sigma,
+      ci.ll = eff.ll2, ci.ul = eff.ul2
+    )
+    res2 <- data.frame(
+      increment = delta.seq, est = est.eff, se = sigma,
+      ci.ll = eff.ll, ci.ul = eff.ul
+    )
   }
 
   # output
