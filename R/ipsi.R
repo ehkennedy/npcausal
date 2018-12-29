@@ -209,27 +209,22 @@ ipsi <- function(y, a, x.trt, x.out, time, id, delta.seq,
     close(pb)
   }
 
-  # conditionally return influence function values
-  if (return_ifvals) {
-    res <- data.frame(
-      increment = delta.seq, est = est.eff, se = sigma,
-      ci.ll = eff.ll2, ci.ul = eff.ul2, ifvals = ifvals2
-    )
-    res2 <- data.frame(
-      increment = delta.seq, est = est.eff, se = sigma,
-      ci.ll = eff.ll, ci.ul = eff.ul, ifvals = ifvals
-    )
-  } else {
-    res <- data.frame(
-      increment = delta.seq, est = est.eff, se = sigma,
-      ci.ll = eff.ll2, ci.ul = eff.ul2
-    )
-    res2 <- data.frame(
-      increment = delta.seq, est = est.eff, se = sigma,
-      ci.ll = eff.ll, ci.ul = eff.ul
-    )
-  }
+  res <- data.frame(
+    increment = delta.seq, est = est.eff, se = sigma,
+    ci.ll = eff.ll2, ci.ul = eff.ul2
+  )
+  res2 <- data.frame(
+    increment = delta.seq, est = est.eff, se = sigma,
+    ci.ll = eff.ll, ci.ul = eff.ul
+  )
 
   # output
-  return(invisible(list(res = res, res.ptwise = res2, calpha = calpha)))
+  if (return_ifvals) {
+    return(invisible(list(
+      res = res, res.ptwise = res2, calpha = calpha,
+      ifvals = ifvals
+    )))
+  } else {
+    return(invisible(list(res = res, res.ptwise = res2, calpha = calpha)))
+  }
 }

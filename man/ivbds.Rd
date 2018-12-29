@@ -37,12 +37,13 @@ A list containing the following components:
 \code{ivbds} is used to estimate bounds on various effects using instrumental variables.
 }
 \examples{
-n <- 100; x <- matrix(rnorm(n*5),nrow=n)
-z <- rbinom(n,1,0.5); a <- rbinom(n,1,0.6*z+0.2)
+n <- 100
+x <- matrix(rnorm(n * 5), nrow = n)
+z <- rbinom(n, 1, 0.5)
+a <- rbinom(n, 1, 0.6 * z + 0.2)
 y <- rnorm(n)
 
-ivbds.res <- ivbds(y,a,z,x)
-
+ivbds.res <- ivbds(y, a, z, x)
 }
 \references{
 (Also see references for function \code{ate})

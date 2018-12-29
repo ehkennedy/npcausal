@@ -33,11 +33,12 @@ A list containing the following components:
 \code{ate} is used to estimate the mean outcome in a population had all subjects received given levels of a discrete (unconfounded) treatment.
 }
 \examples{
-n <- 100; x <- matrix(rnorm(n*5),nrow=n)
-a <- sample(3,n,replace=TRUE); y <- rnorm(n)
+n <- 100
+x <- matrix(rnorm(n * 5), nrow = n)
+a <- sample(3, n, replace = TRUE)
+y <- rnorm(n)
 
-ate.res <- ate(y,a,x)
-
+ate.res <- ate(y, a, x)
 }
 \references{
 Robins JM, Rotnitzky A (1995). Semiparametric efficiency in multivariate regression models with missing data. \emph{Journal of the American Statistical Association}.
