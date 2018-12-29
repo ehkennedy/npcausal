@@ -53,16 +53,16 @@
 #' @examples
 #' n <- 500
 #' T <- 4
-#' 
+#'
 #' time <- rep(1:T, n)
 #' id <- rep(1:n, rep(T, n))
 #' x.trt <- matrix(rnorm(n * T * 5), nrow = n * T)
 #' x.out <- matrix(rnorm(n * T * 5), nrow = n * T)
 #' a <- rbinom(n * T, 1, .5)
 #' y <- rnorm(n)
-#' 
+#'
 #' d.seq <- seq(0.1, 5, length.out = 10)
-#' 
+#'
 #' ipsi.res <- ipsi(y, a, x.trt, x.out, time, id, d.seq)
 #' @references Kennedy EH. Nonparametric causal effects based on incremental
 #' propensity score interventions.
@@ -222,7 +222,7 @@ ipsi <- function(y, a, x.trt, x.out, time, id, delta.seq,
   if (return_ifvals) {
     return(invisible(list(
       res = res, res.ptwise = res2, calpha = calpha,
-      ifvals = ifvals
+      ifvals = (ifvals - est.eff)
     )))
   } else {
     return(invisible(list(res = res, res.ptwise = res2, calpha = calpha)))
