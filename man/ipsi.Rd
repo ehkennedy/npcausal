@@ -7,24 +7,38 @@
 ipsi(dat, x.trt, x.out, delta.seq, nsplits)
 }
 \arguments{
-\item{y}{outcome of interest measured at end of study.}
+\item{y}{Outcome of interest measured at end of study.}
 
-\item{a}{binary treatment.}
+\item{a}{Binary treatment.}
 
-\item{x.trt}{covariate matrix for treatment regression.}
+\item{x.trt}{Covariate matrix for treatment regression.}
 
-\item{x.out}{covariate matrix for outcome regression.}
+\item{x.out}{Covariate matrix for outcome regression.}
 
-\item{time}{measurement time.}
+\item{time}{Measurement time.}
 
-\item{id}{subject identifier.}
+\item{id}{Subject identifier.}
 
-\item{delta.seq}{sequence of delta increment values.}
+\item{delta.seq}{Sequence of delta increment values for incremental
+propensity score intervention.}
 
-\item{nsplits}{integer number of sample splits for nuisance estimation.
-If nsplits=1, sample splitting is not used, and nuisance functions are estimated
-on full sample (in which case validity of SEs/CIs requires empirical
-process conditions). Otherwise must have nsplits>1.}
+\item{nsplits}{Integer number of sample splits for nuisance estimation. If
+\code{nsplits = 1}, sample splitting is not used, and nuisance functions are
+estimated n full sample (in which case validity of standard errors and
+confidence intervals requires empirical process conditions). Otherwise must
+have \code{nsplits > 1}.}
+
+\item{ci_level}{A \code{numeric} value giving the level (1 - alpha) of the
+confidence interval to be computed around the point estimate.}
+
+\item{progress_bar}{A \code{logical} value indicating whether to print a
+customized progress bar as various stages of computation reach completion.
+The default is \code{TRUE}, printing a progress bar to inform the user.}
+
+\item{return_ifvals}{A \code{logical} indicating whether the estimated
+observation-level values of the influence function ought to be returned as
+part of the output object. The default is \code{FALSE} as these values are
+rarely of interest in standard usage.}
 }
 \value{
 A list containing the following components:
@@ -33,26 +47,40 @@ A list containing the following components:
 \item{calpha}{ multiplier bootstrap critical value.}
 }
 \description{
-\code{ipsi} is used to estimate effects of incremental propensity score interventions, i.e., estimates of mean outcomes if the odds of receiving treatment were multiplied by a factor delta.
+\code{ipsi} is used to estimate effects of incremental
+ propensity score interventions, i.e., estimates of mean outcomes if the odds
+ of receiving treatment were multiplied by a factor delta.
 }
 \section{Details}{
 
-Treatment and covariates are expected to be time-varying and measured throughout the course of the study. Therefore if \code{n} is the number of subjects and \code{T} the number of timepoints, then \code{a}, \code{time}, and \code{id} should all be vectors of length \code{n}x\code{T}, and \code{x.trt} and \code{x.out} should be matrices with \code{n}x\code{T} rows. However \code{y} should be a vector of length \code{n} since it is only measured at the end of the study. The subject ordering should be consistent across function inputs, based on the ordering specified by \code{id}. See example below for an illustration.
+Treatment and covariates are expected to be time-varying and measured
+throughout the course of the study. Therefore if \code{n} is the number of
+subjects and \code{T} the number of timepoints, then \code{a}, \code{time},
+and \code{id} should all be vectors of length \code{n}x\code{T}, and
+\code{x.trt} and \code{x.out} should be matrices with \code{n}x\code{T} rows.
+However \code{y} should be a vector of length \code{n} since it is only
+measured at the end of the study. The subject ordering should be consistent
+across function inputs, based on the ordering specified by \code{id}. See
+example below for an illustration.
 }
 
 \examples{
-n <- 500; T <- 4
+n <- 500
+T <- 4
 
-time <- rep(1:T,n); id <- rep(1:n,rep(T,n))
-x.trt <- matrix(rnorm(n*T*5),nrow=n*T)
-x.out <- matrix(rnorm(n*T*5),nrow=n*T)
-a <- rbinom(n*T,1,.5); y <- rnorm(n)
+time <- rep(1:T, n)
+id <- rep(1:n, rep(T, n))
+x.trt <- matrix(rnorm(n * T * 5), nrow = n * T)
+x.out <- matrix(rnorm(n * T * 5), nrow = n * T)
+a <- rbinom(n * T, 1, .5)
+y <- rnorm(n)
 
-d.seq <- seq(0.1,5,length.out=10)
+d.seq <- seq(0.1, 5, length.out = 10)
 
-ipsi.res <- ipsi(y,a, x.trt,x.out, time,id, d.seq)
-
+ipsi.res <- ipsi(y, a, x.trt, x.out, time, id, d.seq)
 }
 \references{
-Kennedy EH. Nonparametric causal effects based on incremental propensity score interventions. \href{https://arxiv.org/abs/1704.00211}{arxiv:1704.00211}
+Kennedy EH. Nonparametric causal effects based on incremental
+propensity score interventions.
+\href{https://arxiv.org/abs/1704.00211}{arxiv:1704.00211}
 }
