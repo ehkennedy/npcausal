@@ -60,7 +60,7 @@ muhat.vals <- mumod$SL.predict
 
 # construct estimated pi/varpi and mu/m values
 a.std <- (xa.new$a-pimod.vals)/sqrt(pi2mod.vals)
-pihat.vals <- approx(density(a.std[1:n])$x,density(a.std[1:n])$y,xout=a.std)$y
+pihat.vals <- approx(density(a.std)$x,density(a.std)$y,xout=a.std)$y
 pihat <- pihat.vals[1:n]; pihat.mat <- matrix(pihat.vals[-(1:n)], nrow=n,ncol=length(a.vals))
 varpihat <- predict(smooth.spline(a.vals, apply(pihat.mat,2,mean)), x=a)$y
 varpihat.mat <- matrix( rep(apply(pihat.mat,2,mean),n), byrow=T, nrow=n)
