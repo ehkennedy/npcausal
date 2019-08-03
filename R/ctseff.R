@@ -95,7 +95,7 @@ est <- approx(locpoly(a,pseudo.out,bandwidth=h.opt),xout=a.vals)$y
 # estimate pointwise confidence band
 # note: other methods could also be used
 se <- NULL; for (a.val in a.vals){
-  a.std <- (a-a.val)/h.opt; kern.std <- (kern(a.std)/h.opt)/h.opt
+  a.std <- (a-a.val)/h.opt; kern.std <- kern(a.std)/h.opt
   beta <- coef(lm(pseudo.out ~ a.std, weights=kern.std))
   Dh <- matrix( c(mean(kern.std), mean(kern.std*a.std),
     mean(kern.std*a.std), mean(kern.std*a.std^2)), nrow=2)
