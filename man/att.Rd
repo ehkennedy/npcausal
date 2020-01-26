@@ -33,11 +33,12 @@ A list containing the following components:
 \code{att} is used to estimate the difference in mean outcome among treated subjects had a binary (unconfounded) treatment been withheld.
 }
 \examples{
-n <- 1000; x <- matrix(rnorm(n*5),nrow=n)
-a <- rbinom(n,1,.3); y <- rnorm(n)
+n <- 1000
+x <- matrix(rnorm(n * 5), nrow = n)
+a <- rbinom(n, 1, .3)
+y <- rnorm(n)
 
-att.res <- att(y,a,x)
-
+att.res <- att(y, a, x)
 }
 \references{
 (Also see references for function \code{ate})
