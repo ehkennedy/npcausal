@@ -67,7 +67,7 @@ ctseff <- function(y, a, x, bw.seq, n.pts = 100, a.rng = c(min(a), max(a)),
 
   # construct estimated pi/varpi and mu/m values
   a.std <- (xa.new$a - pimod.vals) / sqrt(pi2mod.vals)
-  pihat.vals <- approx(density(a.std[1:n])$x, density(a.std[1:n])$y, xout = a.std)$y
+  pihat.vals <- approx(density(a.std)$x, density(a.std[1:n])$y, xout = a.std)$y
   pihat <- pihat.vals[1:n]
   pihat.mat <- matrix(pihat.vals[-(1:n)], nrow = n, ncol = length(a.vals))
   varpihat <- predict(smooth.spline(a.vals, apply(pihat.mat, 2, mean)), x = a)$y
@@ -76,6 +76,7 @@ ctseff <- function(y, a, x, bw.seq, n.pts = 100, a.rng = c(min(a), max(a)),
   muhat.mat <- matrix(muhat.vals[-(1:n)], nrow = n, ncol = length(a.vals))
   mhat <- predict(smooth.spline(a.vals, apply(muhat.mat, 2, mean)), x = a)$y
   mhat.mat <- matrix(rep(apply(muhat.mat, 2, mean), n), byrow = T, nrow = n)
+
 
   # form adjusted/pseudo outcome xi
   pseudo.out <- (y - muhat) / (pihat / varpihat) + mhat
@@ -118,7 +119,7 @@ ctseff <- function(y, a, x, bw.seq, n.pts = 100, a.rng = c(min(a), max(a)),
   se <- NULL
   for (a.val in a.vals) {
     a.std <- (a - a.val) / h.opt
-    kern.std <- (kern(a.std) / h.opt) / h.opt
+    kern.std <- kern(a.std) / h.opt
     beta <- coef(lm(pseudo.out ~ a.std, weights = kern.std))
     Dh <- matrix(c(
       mean(kern.std), mean(kern.std * a.std),
