@@ -4,7 +4,9 @@
 #'  propensity score interventions, i.e., estimates of mean outcomes if the odds
 #'  of receiving treatment were multiplied by a factor delta.
 #'
-#' @usage ipsi(dat, x.trt, x.out, delta.seq, nsplits)
+#' @usage ipsi(dat, x.trt, x.out, delta.seq, nsplits, ci_level = 0.95,
+#'  progress_bar = TRUE, return_ifvals = FALSE,
+#'  sl.lib=c("SL.earth","SL.gam","SL.glm","SL.glmnet","SL.glm.interaction", "SL.mean","SL.ranger","rpart"))
 #'
 #' @param y Outcome of interest measured at end of study.
 #' @param a Binary treatment.
@@ -28,6 +30,11 @@
 #'  observation-level values of the influence function ought to be returned as
 #'  part of the output object. The default is \code{FALSE} as these values are
 #'  rarely of interest in standard usage.
+#' @param fit How nuisance functions should be estimated. Options are "rf" for
+#'  random forests via the \code{ranger} package, or "sl" for super learner.
+#' @param sl.lib sl.lib algorithm library for SuperLearner.
+#' Default library includes "earth", "gam", "glm", "glmnet", "glm.interaction",
+#' "mean", "ranger", "rpart.
 #'
 #' @section Details:
 #' Treatment and covariates are expected to be time-varying and measured
@@ -59,7 +66,7 @@
 #' x.trt <- matrix(rnorm(n * T * 5), nrow = n * T)
 #' x.out <- matrix(rnorm(n * T * 5), nrow = n * T)
 #' a <- rbinom(n * T, 1, .5)
-#' y <- rnorm(n)
+#' y <- rnorm(mean=1,n)
 #'
 #' d.seq <- seq(0.1, 5, length.out = 10)
 #'
@@ -70,7 +77,16 @@
 #
 ipsi <- function(y, a, x.trt, x.out, time, id, delta.seq,
                  nsplits = 2, ci_level = 0.95,
-                 progress_bar = TRUE, return_ifvals = FALSE) {
+                 progress_bar = TRUE, return_ifvals = FALSE,
+                 fit = "rf",
+                 sl.lib = c("SL.earth", "SL.gam", "SL.glm", "SL.glm.interaction", "SL.mean", "SL.ranger", "SL.rpart")) {
+
+  require("SuperLearner")
+  require("earth")
+  require("gam")
+  require("ranger")
+  require("rpart")
+
   # setup storage
   ntimes <- length(table(time))
   end <- max(time)
@@ -86,7 +102,7 @@ ipsi <- function(y, a, x.trt, x.out, time, id, delta.seq,
   rt <- matrix(nrow = n * ntimes, ncol = k)
   vt <- matrix(nrow = n * ntimes, ncol = k)
   x.trt <- data.frame(x.trt)
-  x.out <- data.frame(x.out)
+  x.out <- data.frame(x.out); x.out$a <- a
 
   if (progress_bar) {
     pb <- txtProgressBar(
@@ -110,10 +126,17 @@ ipsi <- function(y, a, x.trt, x.out, time, id, delta.seq,
     }
 
     # fit treatment model
-    trtmod <- ranger::ranger(stats::as.formula("a ~ ."),
-      dat = cbind(x.trt, a = dat$a)[slong != split, ]
-    )
-    dat$ps <- predict(trtmod, data = x.trt)$predictions
+    if (fit=="rf"){
+      trtmod <- ranger::ranger(stats::as.formula("a ~ ."),
+        dat = cbind(x.trt, a = dat$a)[slong != split, ])
+      dat$ps <- predict(trtmod, data = x.trt)$predictions
+    }
+
+    if (fit=="sl"){
+      trtmod <- SuperLearner(dat$a[slong!=split], x.trt[slong!=split,],
+          newX = x.trt, SL.library = sl.lib, family = binomial)
+      dat$ps <- trtmod$SL.predict
+    }
 
     for (j in seq_len(k)) {
       if (progress_bar) {
@@ -142,23 +165,30 @@ ipsi <- function(y, a, x.trt, x.out, time, id, delta.seq,
       }
       for (i in seq_len(ntimes)) {
         t <- rev(unique(dat$time))[i]
-        outmod[[i]] <-
-          ranger::ranger(stats::as.formula("rtp1 ~ ."),
-            dat = cbind(
-              x.out,
-              rtp1
-            )[dat$time == t & slong != split, ]
-          )
 
         # counterfactual case for treatment: A = 1
         newx1 <- x.out[dat$time == t, ]
         newx1$a <- 1
-        m1 <- predict(outmod[[i]], data = newx1)$predictions
 
         # counterfactual case for no treatment: A = 0
         newx0 <- x.out[dat$time == t, ]
         newx0$a <- 0
-        m0 <- predict(outmod[[i]], data = newx0)$predictions
+
+        if (fit=="rf"){
+          outmod[[i]] <- ranger::ranger(stats::as.formula("rtp1 ~ ."),
+            dat = cbind(x.out,rtp1)[dat$time == t & slong != split, ])
+          m1 <- predict(outmod[[i]], data = newx1)$predictions
+          m0 <- predict(outmod[[i]], data = newx0)$predictions
+        }
+
+        if (fit=="sl"){
+          print(c(i,j)); flush.console()
+          outmod[[i]] <- SuperLearner(rtp1[s!=split],
+            x.out[dat$time==t & slong!=split,],SL.library = sl.lib,
+            newX=rbind(newx1,newx0))
+          m1 <- outmod[[i]]$SL.predict[1:dim(newx1)[1]]
+          m0 <- outmod[[i]]$SL.predict[(dim(newx1)[1]+1):(dim(newx1)[1]+dim(newx0)[1])]
+        }
 
         pi.t <- dat$ps[dat$time == t]
         rtp1 <- (delta * pi.t * m1 + (1 - pi.t) * m0) /
