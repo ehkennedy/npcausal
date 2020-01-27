@@ -16,16 +16,15 @@ Description: This package provides a variety of tools for the nonparametric
     inference in the form of confidence intervals and hypothesis tests. Many of
     the methods are doubly robust.
 Depends: R (>= 3.2.0)
-Imports:
-    stats,
-    ranger
-Suggests:
-    testthat,
-    knitr,
-    rmarkdown,
+Imports: stats, ranger
+Suggests: testthat, knitr, rmarkdown,
 License: GPL
 URL: https://github.com/ehkennedy/npcausal
 BugReports: https://github.com/ehkennedy/npcausal/issues
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2
+NeedsCompilation: no
+Packaged: 2020-01-27 15:48:37 UTC; kennedye
+Author: Edward Kennedy [aut, cre, cph],
+  Nima Hejazi [ctb] (<https://orcid.org/0000-0002-7127-2789>)
