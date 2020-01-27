@@ -4,7 +4,9 @@
 \alias{ipsi}
 \title{Estimating effects of incremental propensity score interventions}
 \usage{
-ipsi(dat, x.trt, x.out, delta.seq, nsplits)
+ipsi(dat, x.trt, x.out, delta.seq, nsplits, ci_level = 0.95,
+ progress_bar = TRUE, return_ifvals = FALSE,
+ sl.lib=c("SL.earth","SL.gam","SL.glm","SL.glmnet","SL.glm.interaction", "SL.mean","SL.ranger","rpart"))
 }
 \arguments{
 \item{y}{Outcome of interest measured at end of study.}
@@ -39,6 +41,13 @@ The default is \code{TRUE}, printing a progress bar to inform the user.}
 observation-level values of the influence function ought to be returned as
 part of the output object. The default is \code{FALSE} as these values are
 rarely of interest in standard usage.}
+
+\item{fit}{How nuisance functions should be estimated. Options are "rf" for
+random forests via the \code{ranger} package, or "sl" for super learner.}
+
+\item{sl.lib}{sl.lib algorithm library for SuperLearner.
+Default library includes "earth", "gam", "glm", "glmnet", "glm.interaction",
+"mean", "ranger", "rpart.}
 }
 \value{
 A list containing the following components:
@@ -73,7 +82,7 @@ id <- rep(1:n, rep(T, n))
 x.trt <- matrix(rnorm(n * T * 5), nrow = n * T)
 x.out <- matrix(rnorm(n * T * 5), nrow = n * T)
 a <- rbinom(n * T, 1, .5)
-y <- rnorm(n)
+y <- rnorm(mean=1,n)
 
 d.seq <- seq(0.1, 5, length.out = 10)
 
