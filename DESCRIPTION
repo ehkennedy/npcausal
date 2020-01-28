@@ -1,30 +1,13 @@
 Package: npcausal
+Type: Package
 Title: Nonparametric causal inference methods
-Version: 0.1.1
-Authors@R: c(
-    person("Edward", "Kennedy", email = "edward@stat.cmu.edu",
-           role = c("aut", "cre", "cph")),
-    person("Nima", "Hejazi", email = "nhejazi@berkeley.edu",
-           role = "ctb",
-           comment = c(ORCID = "0000-0002-7127-2789"))
-  )
+Version: 0.1.0
+Author: Edward H. Kennedy
 Maintainer: Edward H. Kennedy <edward@stat.cmu.edu>
-Description: This package provides a variety of tools for the nonparametric
-    estimation of causal effects across a wide range of settings. The methods
-    are based on the theory of influence functions, and can incorporate flexible
-    machine learning and high-dimensional regression tools, while still yielding
-    inference in the form of confidence intervals and hypothesis tests. Many of
-    the methods are doubly robust.
-Depends: R (>= 3.2.0)
-Imports: stats, ranger
-Suggests: testthat, knitr, rmarkdown,
+Description: This package provides a variety of tools for nonparametric estimation of causal effects across a wide range of settings. The methods are based on the theory of influence functions, and can incorporate flexible machine learning and high-dimensional regression tools, while still yielding inference in the form of confidence intervals and hypothesis tests. Many of the methods are doubly robust.
 License: GPL
-URL: https://github.com/ehkennedy/npcausal
-BugReports: https://github.com/ehkennedy/npcausal/issues
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.0.2
 NeedsCompilation: no
-Packaged: 2020-01-27 15:48:37 UTC; kennedye
-Author: Edward Kennedy [aut, cre, cph],
-  Nima Hejazi [ctb] (<https://orcid.org/0000-0002-7127-2789>)
+Packaged: 2020-01-28 01:02:39 UTC; kennedye
