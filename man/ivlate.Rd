@@ -37,13 +37,12 @@ A list containing the following components:
 \code{ivlate} is used to estimate the mean outcome among compliers (i.e., those encouraged by the instrument) had all subjects received treatment versus control.
 }
 \examples{
-n <- 100
-x <- matrix(rnorm(n * 5), nrow = n)
-z <- rbinom(n, 1, 0.5)
-a <- rbinom(n, 1, 0.6 * z + 0.2)
+n <- 100; x <- matrix(rnorm(n*5),nrow=n)
+z <- rbinom(n,1,0.5); a <- rbinom(n,1,0.6*z+0.2)
 y <- rnorm(n)
 
-ivlate.res <- ivlate(y, a, z, x)
+ivlate.res <- ivlate(y,a,z,x)
+
 }
 \references{
 (Also see references for function \code{ate})
