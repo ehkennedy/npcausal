@@ -13,12 +13,11 @@
 #'
 #' @references Wright MN, Ziegler A (2016). ranger: A fast implementation of random forests for high dimensional data in C++ and R. \emph{Journal of Statistical Software}.
 #'
-SL.ranger <- function(Y, X, newX, family, ...) {
+SL.ranger <- function (Y, X, newX, family, ...) {
   require("ranger")
-  fit.rf <- ranger::ranger(Y ~ ., data = cbind(X, Y))
-  pred <- predict(fit.rf, data = newX)$predictions
+  fit.rf <- ranger::ranger(Y ~ ., data=cbind(X,Y))
+  pred <- predict(fit.rf,data=newX)$predictions
   fit <- list(object = fit.rf)
   out <- list(pred = pred, fit = fit)
   class(out$fit) <- c("SL.ranger")
-  return(out)
-}
+  return(out) }

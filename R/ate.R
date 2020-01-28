@@ -23,12 +23,11 @@
 #' \item{ifvals}{ matrix of estimated influence function values.}
 #'
 #' @examples
-#' n <- 100
-#' x <- matrix(rnorm(n * 5), nrow = n)
-#' a <- sample(3, n, replace = TRUE)
-#' y <- rnorm(n)
-#' 
-#' ate.res <- ate(y, a, x)
+#' n <- 100; x <- matrix(rnorm(n*5),nrow=n)
+#' a <- sample(3,n,replace=TRUE); y <- rnorm(n)
+#'
+#' ate.res <- ate(y,a,x)
+#'
 #' @references Robins JM, Rotnitzky A (1995). Semiparametric efficiency in multivariate regression models with missing data. \emph{Journal of the American Statistical Association}.
 #' @references Hahn J (1998). On the role of the propensity score in efficient semiparametric estimation of average treatment effects. \emph{Econometrica}.
 #' @references van der Laan MJ, Robins JM (2003). \emph{Unified Methods for Censored Longitudinal Data and Causality} (Springer).
@@ -37,111 +36,93 @@
 #' @references Zheng W, van der Laan (2010). Asymptotic theory for cross-validated targeted maximum likelihood estimation \emph{UC Berkeley Division of Biostatistics Working Paper Series}.
 #' @references Chernozhukov V, Chetverikov V, Demirer M, et al (2016). Double machine learning for treatment and causal parameters.
 #'
-ate <- function(y, a, x, nsplits = 2,
-                sl.lib = c("SL.earth", "SL.gam", "SL.glm", "SL.glm.interaction", "SL.mean", "SL.ranger", "SL.rpart")) {
-  require("SuperLearner")
-  require("earth")
-  require("gam")
-  require("ranger")
-  require("rpart")
+ate <- function(y,a,x, nsplits=2,
+  sl.lib=c("SL.earth","SL.gam","SL.glm","SL.glm.interaction","SL.mean","SL.ranger","SL.rpart")){
 
-  n <- dim(x)[1]
-  avals <- names(table(a))
-  n.avals <- length(avals)
-  pb <- txtProgressBar(min = 0, max = 2 * nsplits * n.avals, style = 3)
+require("SuperLearner")
+require("earth")
+require("gam")
+require("ranger")
+require("rpart")
 
-  s <- sample(rep(1:nsplits, ceiling(n / nsplits))[1:n])
+n <- dim(x)[1]
+avals <- names(table(a))
+n.avals <- length(avals)
+pb <- txtProgressBar(min=0, max=2*nsplits*n.avals, style=3)
 
-  muhat <- as.data.frame(matrix(NA, nrow = n, ncol = n.avals))
-  colnames(muhat) <- paste("a", avals, sep = "")
-  pihat <- muhat
+s <- sample(rep(1:nsplits,ceiling(n/nsplits))[1:n])
 
-  pbcount <- 0
-  for (i in 1:n.avals) {
-    if (i == 1) {
-      Sys.sleep(0.1)
-      setTxtProgressBar(pb, pbcount)
-      pbcount <- pbcount + 1
-    }
-    for (vfold in 1:nsplits) {
-      train <- s != vfold
-      test <- s == vfold
-      if (nsplits == 1) {
-        train <- test
-      }
+muhat <- as.data.frame(matrix(NA,nrow=n,ncol=n.avals))
+colnames(muhat) <- paste("a",avals,sep="")
+pihat <- muhat
 
-      # estimate propensity score
-      if (i != n.avals) {
-        pifit <- SuperLearner(as.numeric(a == avals[i])[train], as.data.frame(x[train, ]),
-          newX = as.data.frame(x[test, ]), SL.library = sl.lib, family = binomial
-        )
-        pihat[test, i] <- pifit$SL.predict
-      }
+pbcount <- 0
+for (i in 1:n.avals){
+  if (i==1){ Sys.sleep(0.1); setTxtProgressBar(pb,pbcount); pbcount <- pbcount+1 }
+for (vfold in 1:nsplits){
 
-      Sys.sleep(0.1)
-      setTxtProgressBar(pb, pbcount)
-      pbcount <- pbcount + 1
+train <- s!=vfold; test <- s==vfold
+if (nsplits==1){ train <- test }
 
-      # estimate regression function
-      mufit <- SuperLearner(y[a == avals[i] & train],
-        as.data.frame(x[a == avals[i] & train, ]),
-        newX = as.data.frame(x[test, ]), SL.library = sl.lib
-      )
-      muhat[test, i] <- mufit$SL.predict
+# estimate propensity score
+if (i != n.avals){
+pifit <- SuperLearner(as.numeric(a==avals[i])[train],as.data.frame(x[train,]),
+  newX=as.data.frame(x[test,]), SL.library=sl.lib, family=binomial)
+pihat[test,i] <-pifit$SL.predict }
 
-      Sys.sleep(0.1)
-      setTxtProgressBar(pb, pbcount)
-      pbcount <- pbcount + 1
-    }
-    if (i == n.avals) {
-      pihat[, i] <- 1 - apply(pihat, 1, sum, na.rm = T)
-    }
-  }
+Sys.sleep(0.1)
+setTxtProgressBar(pb,pbcount); pbcount <- pbcount+1
 
-  amat <- matrix(rep(a, n.avals), nrow = n, byrow = F)
-  alevel <- matrix(rep(as.numeric(avals), rep(n, n.avals)), nrow = n, byrow = F)
-  ymat <- matrix(rep(y, n.avals), nrow = n, byrow = F)
+# estimate regression function
+mufit <- SuperLearner(y[a==avals[i] & train],
+  as.data.frame(x[a==avals[i] & train,]),
+  newX=as.data.frame(x[test,]), SL.library=sl.lib)
+muhat[test,i] <- mufit$SL.predict
 
-  ifvals <- as.matrix((amat == alevel) * (ymat - muhat) / pihat + muhat)
+Sys.sleep(0.1)
+setTxtProgressBar(pb,pbcount); pbcount <- pbcount+1
+}
+if (i == n.avals){ pihat[,i] <- 1 - apply(pihat,1,sum, na.rm=T) }
+}
 
-  est <- apply(ifvals, 2, mean)
-  se <- apply(ifvals, 2, sd) / sqrt(n)
-  ci.ll <- est - 1.96 * se
-  ci.ul <- est + 1.96 * se
-  pval <- round(2 * (1 - pnorm(abs(est / se))), 3)
-  paste("E{Y(", avals, ")}")
-  res1 <- data.frame(parameter = paste("E{Y(", avals, ")}", sep = ""), est, se, ci.ll, ci.ul, pval)
+amat <- matrix(rep(a,n.avals),nrow=n,byrow=F)
+alevel <- matrix(rep(as.numeric(avals), rep(n,n.avals)),nrow=n,byrow=F)
+ymat <- matrix(rep(y,n.avals),nrow=n,byrow=F)
 
-  signdist <- function(x) {
-    c(as.dist(outer(x, x, "-")))
-  }
-  ifvals2 <- t(apply(ifvals, 1, signdist))
-  if (n.avals == 2) {
-    ifvals2 <- t(ifvals2)
-  }
+ifvals <- as.matrix( (amat==alevel)*(ymat-muhat)/pihat + muhat )
 
-  tmp <- expand.grid(1:n.avals, 1:n.avals)
-  tmp2 <- tmp[tmp[, 1] > tmp[, 2], ]
-  contrasts <- apply(cbind(avals[tmp2[, 1]], avals[tmp2[, 2]]), 1, paste, collapse = ")-Y(")
-  contrasts <- paste("E{Y(", contrasts, ")}", sep = "")
+est <- apply(ifvals,2,mean)
+se <- apply(ifvals,2,sd)/sqrt(n)
+ci.ll <- est-1.96*se; ci.ul <- est+1.96*se
+pval <- round(2*(1-pnorm(abs(est/se))),3)
+paste("E{Y(",avals,")}")
+res1 <- data.frame(parameter=paste("E{Y(",avals,")}",sep=""), est,se,ci.ll,ci.ul,pval)
 
-  est2 <- apply(ifvals2, 2, mean)
-  se2 <- apply(ifvals2, 2, sd) / sqrt(n)
-  ci.ll2 <- est2 - 1.96 * se2
-  ci.ul2 <- est2 + 1.96 * se2
-  pval2 <- round(2 * (1 - pnorm(abs(est2 / se2))), 3)
-  res2 <- data.frame(parameter = contrasts, est = est2, se = se2, ci.ll = ci.ll2, ci.ul = ci.ul2, pval = pval2)
+signdist <- function(x){ c(as.dist(outer(x,x,'-'))) }
+ifvals2 <- t(apply(ifvals,1,signdist))
+if (n.avals==2){ ifvals2 <- t(ifvals2)  }
 
-  res <- rbind(res1, res2)
-  rownames(res) <- NULL
+tmp <- expand.grid(1:n.avals,1:n.avals)
+tmp2 <- tmp[tmp[,1]>tmp[,2],]
+contrasts <- apply(cbind(avals[tmp2[,1]],avals[tmp2[,2]]),1,paste,collapse=")-Y(")
+contrasts <- paste("E{Y(",contrasts,")}",sep="")
 
-  Sys.sleep(0.1)
-  setTxtProgressBar(pb, pbcount)
-  close(pb)
+est2 <- apply(ifvals2,2,mean)
+se2 <- apply(ifvals2,2,sd)/sqrt(n)
+ci.ll2 <- est2-1.96*se2; ci.ul2 <- est2+1.96*se2
+pval2 <- round(2*(1-pnorm(abs(est2/se2))),3)
+res2 <- data.frame(parameter=contrasts,est=est2,se=se2,ci.ll=ci.ll2,ci.ul=ci.ul2,pval=pval2)
 
-  nuis <- as.data.frame(cbind(pihat, muhat))
-  colnames(nuis) <- paste(rep(c("pi", "mu"), rep(n.avals, 2)), colnames(nuis), sep = "_")
+res <- rbind(res1,res2); rownames(res) <- NULL
 
-  print(res)
-  return(invisible(list(res = res, nuis = nuis, ifvals = as.data.frame(ifvals))))
+Sys.sleep(0.1)
+setTxtProgressBar(pb,pbcount)
+close(pb)
+
+nuis <- as.data.frame(cbind(pihat,muhat))
+colnames(nuis) <- paste(rep(c("pi","mu"), rep(n.avals,2)), colnames(nuis), sep="_")
+
+print(res)
+return(invisible(list(res=res, nuis=nuis, ifvals=as.data.frame(ifvals) )))
+
 }

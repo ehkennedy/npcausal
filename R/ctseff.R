@@ -1,4 +1,3 @@
-
 #' @title Estimating average effect curve for continuous treatment
 #'
 #' @description \code{ctseff} is used to estimate the mean outcomes in a population had all subjects received given levels of a continuous (unconfounded) treatment.
@@ -24,10 +23,10 @@
 #' x <- matrix(rnorm(n * 5), nrow = n)
 #' a <- runif(n)
 #' y <- a + rnorm(n, sd = .5)
-#' 
+#'
 #' ce.res <- ctseff(y, a, x, bw.seq = seq(.2, 2, length.out = 100))
 #' plot.ctseff(ce.res)
-#' 
+#'
 #' # check that bandwidth choice is minimizer
 #' plot(ce.res$bw.risk$bw, ce.res$bw.risk$risk)
 #' @references Kennedy EH, Ma Z, McHugh MD, Small DS (2017). Nonparametric methods for doubly robust estimation of continuous treatment effects. \emph{Journal of the Royal Statistical Society, Series B}. \href{https://arxiv.org/abs/1507.00747}{arxiv:1507.00747}
