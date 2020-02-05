@@ -37,7 +37,8 @@
 #' @references Chernozhukov V, Chetverikov V, Demirer M, et al (2016). Double machine learning for treatment and causal parameters.
 #'
 ate <- function(y,a,x, nsplits=2,
-  sl.lib=c("SL.earth","SL.gam","SL.glm","SL.glm.interaction","SL.mean","SL.ranger","SL.rpart")){
+  sl.lib=c("SL.earth","SL.gam","SL.glm","SL.glm.interaction","SL.mean","SL.ranger","SL.rpart"), 
+  ps=NULL){
 
 require("SuperLearner")
 require("earth")
@@ -65,7 +66,7 @@ train <- s!=vfold; test <- s==vfold
 if (nsplits==1){ train <- test }
 
 # estimate propensity score
-if (i != n.avals){
+if (i != n.avals & is.null(ps)){
 pifit <- SuperLearner(as.numeric(a==avals[i])[train],as.data.frame(x[train,]),
   newX=as.data.frame(x[test,]), SL.library=sl.lib, family=binomial)
 pihat[test,i] <-pifit$SL.predict }
@@ -89,6 +90,7 @@ amat <- matrix(rep(a,n.avals),nrow=n,byrow=F)
 alevel <- matrix(rep(as.numeric(avals), rep(n,n.avals)),nrow=n,byrow=F)
 ymat <- matrix(rep(y,n.avals),nrow=n,byrow=F)
 
+if (!is.null(ps)){ pihat <- amat*ps + (1-amat)*(1-ps) }
 ifvals <- as.matrix( (amat==alevel)*(ymat-muhat)/pihat + muhat )
 
 est <- apply(ifvals,2,mean)
