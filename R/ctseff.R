@@ -128,12 +128,10 @@ ctseff <- function(y, a, x, bw.seq, n.pts = 100, a.rng = c(min(a), max(a)),
     g2 <- matrix(rep((a.vals - a.val) / h.opt, n), byrow = T, nrow = n)
     intfn1.mat <- kern.mat * (muhat.mat - mhat.mat) * varpihat.mat
     intfn2.mat <- g2 * kern.mat * (muhat.mat - mhat.mat) * varpihat.mat
-    int1 <- apply(matrix(rep((a.vals[-1] - a.vals[-length(a.vals)]) / 2, n),
-      byrow = T, nrow = n
-    ) * intfn1.mat[, -1] + intfn1.mat[, -length(a.vals)], 1, sum)
-    int2 <- apply(matrix(rep((a.vals[-1] - a.vals[-length(a.vals)]) / 2, n),
-      byrow = T, nrow = n
-    ) * intfn2.mat[, -1] + intfn2.mat[, -length(a.vals)], 1, sum)
+    int1 <- apply(matrix(rep((a.vals[-1]-a.vals[-length(a.vals)]),n),
+      byrow=T,nrow=n)*(intfn1.mat[,-1] + intfn1.mat[,-length(a.vals)]) / 2, 1,sum)
+    int2 <- apply(matrix(rep((a.vals[-1]-a.vals[-length(a.vals)]),n),
+      byrow=T,nrow=n)* ( intfn2.mat[,-1] + intfn2.mat[,-length(a.vals)]) /2, 1,sum)
     sigma <- cov(t(solve(Dh) %*%
       rbind(
         kern.std * (pseudo.out - beta[1] - beta[2] * a.std) + int1,
