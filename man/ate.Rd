@@ -2,7 +2,7 @@
 % Please edit documentation in R/ate.R
 \name{ate}
 \alias{ate}
-\title{Estimating average effect of discrete treatment}
+\title{Doubly robust estimation of average treatment effect}
 \usage{
 ate(y, a, x, nsplits=2, sl.lib=c("SL.earth","SL.gam","SL.glm","SL.glmnet",
   "SL.glm.interaction", "SL.mean","SL.ranger","rpart"))
@@ -30,13 +30,15 @@ A list containing the following components:
 \item{ifvals}{ matrix of estimated influence function values.}
 }
 \description{
-\code{ate} is used to estimate the mean outcome in a population had all subjects received given levels of a discrete (unconfounded) treatment.
+\code{ate} is used to estimate the mean outcome in a population had
+ all subjects received given levels of a discrete (unconfounded) treatment, using
+ doubly robust methods with ensembled nuisance estimation.
 }
 \examples{
 n <- 100; x <- matrix(rnorm(n*5),nrow=n)
-a <- sample(3,n,replace=TRUE); y <- rnorm(n)
+a <- sample(3,n,replace=TRUE); y <- rnorm(n,mean=x[,1])
 
-ate.res <- ate(y,a,x)
+ate.res <- ate(y,a,x, sl.lib=c("SL.mean","SL.gam"))
 
 }
 \references{
