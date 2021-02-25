@@ -61,7 +61,7 @@ pihat <- muhat
 
 pbcount <- 0
 for (i in 1:n.avals){
-  if (i==1){ Sys.sleep(0.1); setTxtProgressBar(pb,pbcount); pbcount <- pbcount+1 }
+  if (i==1){setTxtProgressBar(pb,pbcount); pbcount <- pbcount+1 }
 for (vfold in 1:nsplits){
 
 train <- s!=vfold; test <- s==vfold
@@ -73,7 +73,7 @@ pifit <- SuperLearner(as.numeric(a==avals[i])[train],as.data.frame(x[train,]),
   newX=as.data.frame(x[test,]), SL.library=sl.lib, family=binomial)
 pihat[test,i] <-pifit$SL.predict }
 
-Sys.sleep(0.1)
+
 setTxtProgressBar(pb,pbcount); pbcount <- pbcount+1
 
 # estimate regression function
@@ -82,7 +82,7 @@ mufit <- SuperLearner(y[a==avals[i] & train],
   newX=as.data.frame(x[test,]), SL.library=sl.lib)
 muhat[test,i] <- mufit$SL.predict
 
-Sys.sleep(0.1)
+
 setTxtProgressBar(pb,pbcount); pbcount <- pbcount+1
 }
 if (i == n.avals){ pihat[,i] <- 1 - apply(pihat,1,sum, na.rm=T) }
@@ -119,7 +119,7 @@ res2 <- data.frame(parameter=contrasts,est=est2,se=se2,ci.ll=ci.ll2,ci.ul=ci.ul2
 
 res <- rbind(res1,res2); rownames(res) <- NULL
 
-Sys.sleep(0.1)
+
 setTxtProgressBar(pb,pbcount)
 close(pb)
 
