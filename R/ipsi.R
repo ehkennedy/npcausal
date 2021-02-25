@@ -4,8 +4,8 @@
 #'  propensity score interventions, i.e., estimates of mean outcomes if the odds
 #'  of receiving treatment were multiplied by a factor delta.
 #'
-#' @usage ipsi(dat, x.trt, x.out, delta.seq, nsplits, ci_level = 0.95,
-#'  progress_bar = TRUE, return_ifvals = FALSE,
+#' @usage ipsi(y, a, x.trt, x.out, time, id, delta.seq, nsplits, ci_level = 0.95,
+#'  progress_bar = TRUE, return_ifvals = FALSE, fit,
 #'  sl.lib=c("SL.earth","SL.gam","SL.glm","SL.glmnet","SL.glm.interaction", "SL.mean","SL.ranger","rpart"))
 #'
 #' @param y Outcome of interest measured at end of study.
