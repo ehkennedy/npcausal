@@ -4,8 +4,8 @@
 \alias{ipsi}
 \title{Estimating effects of incremental propensity score interventions}
 \usage{
-ipsi(dat, x.trt, x.out, delta.seq, nsplits, ci_level = 0.95,
- progress_bar = TRUE, return_ifvals = FALSE,
+ipsi(y, a, x.trt, x.out, time, id, delta.seq, nsplits, ci_level = 0.95,
+ progress_bar = TRUE, return_ifvals = FALSE, fit,
  sl.lib=c("SL.earth","SL.gam","SL.glm","SL.glmnet","SL.glm.interaction", "SL.mean","SL.ranger","rpart"))
 }
 \arguments{
