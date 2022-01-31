@@ -11,6 +11,7 @@
 #' @param x covariate matrix.
 #' @param bw.seq sequence of bandwidth values.
 #' @param sl.lib algorithm library for SuperLearner.
+#' @param quantile if set to TRUE, a.rng is calculated over n.pts quantiles as opposed to the uniform range of values
 #' Default library includes "earth", "gam", "glm", "glmnet", "glm.interaction",
 #' "mean", and "ranger".
 #'
@@ -32,6 +33,7 @@
 #' @references Kennedy EH, Ma Z, McHugh MD, Small DS (2017). Nonparametric methods for doubly robust estimation of continuous treatment effects. \emph{Journal of the Royal Statistical Society, Series B}. \href{https://arxiv.org/abs/1507.00747}{arxiv:1507.00747}
 #'
 ctseff <- function(y, a, x, bw.seq, n.pts = 100, a.rng = c(min(a), max(a)),
+                   quantile = FALSE,
                    sl.lib = c("SL.earth", "SL.gam", "SL.glm", "SL.glm.interaction", "SL.mean", "SL.ranger")) {
   require("SuperLearner")
   require("earth")
@@ -45,9 +47,14 @@ ctseff <- function(y, a, x, bw.seq, n.pts = 100, a.rng = c(min(a), max(a)),
   n <- dim(x)[1]
 
   # set up evaluation points & matrices for predictions
-  a.min <- a.rng[1]
-  a.max <- a.rng[2]
-  a.vals <- seq(a.min, a.max, length.out = n.pts)
+  if(quantile == FALSE){
+    a.min <- a.rng[1]
+    a.max <- a.rng[2]
+    a.vals <- seq(a.min, a.max, length.out = n.pts)
+  }else{
+    a.vals <- as.numeric(quantile(a, seq(0,1, 1/n.pts)))
+  }
+
   xa.new <- rbind(cbind(x, a), cbind(x[rep(1:n, length(a.vals)), ], a = rep(a.vals, rep(n, length(a.vals)))))
   x.new <- xa.new[, -dim(xa.new)[2]]
   x <- data.frame(x)
@@ -144,5 +151,18 @@ ctseff <- function(y, a, x, bw.seq, n.pts = 100, a.rng = c(min(a), max(a)),
   ci.ul <- est + 1.96 * se / sqrt(n)
   res <- data.frame(a.vals, est, se, ci.ll, ci.ul)
 
-  return(invisible(list(res = res, bw.risk = bw.risk)))
+  #create df for model evaluation
+  model_eval <- data.frame(pihat = pihat,
+                           varpihat = varpihat,
+                           muhat = muhat)
+
+  model_eval_mat <- data.frame(pihat.mat = pihat.mat,
+                               varpihat.mat = varpihat.mat,
+                               muhat.mat = muhat.mat)
+
+  return(invisible(list(res = res,
+                        bw.risk = bw.risk,
+                        model_eval = model_eval,
+                        model_eval_mat = model_eval_mat))
+         )
 }
