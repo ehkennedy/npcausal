@@ -87,10 +87,16 @@ ipsi <- function(y, a, x.trt, x.out, time, id, delta.seq,
   require("ranger")
   require("rpart")
 
+  n <- length(unique(id))
+
+  # Re-order id variable if it is un-ordered
+  if (is.unsorted(id)) {
+    id <- rep(1:n, rep(length(unique(time)), n))
+  }
+  
   # setup storage
   ntimes <- length(table(time))
   end <- max(time)
-  n <- length(unique(id))
   ynew <- rep(NA, n * ntimes)
   ynew[time == end] <- y
   dat <- data.frame(time = time, id = id, y = ynew, a = a)
